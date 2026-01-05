@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h2>Actions</h2>
+
+<button onclick="window.location.href='/add_person/'">
+    ➕ Add Person
+</button>
+
+<button onclick="askName()">
+    👋 Greet Me
+</button>
+
+Welcome to my Django Website!
+<h1>People</h1>
+<!-- This section is for filtering people by name and minimum age -->
+<form method="get">
+    <input type="text" name="name" placeholder="Name contains">
+    <input type="number" name="min_age" placeholder="Min age">
+    <button type="submit">Filter</button>
+</form>
+
+<hr>
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+      <h3>Statistics</h3>
+      <p>
+          <strong>Total People Found:</strong> {{ total_people }}<br>
+          <!-- avg_age might be None if list is empty, so we use default -->
+          <strong>Average Age:</strong> {{ avg_age|default:"0"|floatformat:1 }} years
+      </p>
+  </div>
+<!-- This section is for Editing and Deleting people and also for listing people. For loop list people and then there is 2 button which redirect to respective pages for editing and deleteing-->
+<ul>
+    {% for person in people %}
+    <li>
+          <strong>{{ person.name }}</strong> ({{ person.age }} years old)
+
+          <!-- 1. Display Team -->
+          {% if person.team %}
+              <span style="background-color: #e0e0e0; padding: 2px 5px; border-radius: 4px; font-size: 0.8em;">
+                  Team: {{ person.team.name }}
+              </span>
+          {% else %}
+              <span style="color: red; font-size: 0.8em;">(No Team)</span>
+          {% endif %}
+
+          <!-- 2. Display Skills (Looping through ManyToMany) -->
+          <br>
+          {% if person.skills.all %}
+              <small>Skills({{person.skill_count}}):
+                  {% for skill in person.skills.all %}
+                      {{ skill.name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+              </small>
+          {% else %}
+              <small style="color: grey;">No skills added</small>
+          {% endif %}
+
+          <!-- 3. Display Profile Bio (OneToOne) -->
+          <!-- Note: This requires select_related('profile') in views.py to avoid errors if profile is missing -->
+          {% if person.profile %}
+               <br>
+               <small><i>"{{ person.profile.bio }}"</i></small>
+          {% endif %}
+      </li>
+    |
+    <a href="{% url 'edit_person' person.id %}">Edit</a>
+    |
+    <a href="{% url 'delete_person' person.id %}">Delete</a>
+    {% empty %}
+    <li>No people found.</li>
+    {% endfor %}
+</ul> 
+<!-- This is for excluding minors. This mainly is a checkbox which is checked if exclude_minors is true else it will be unchecked. -->
+<form method="get">
+    <label>
+        <input type="checkbox" name="exclude_minors" value="1" {% if exclude_minors %}checked{% endif %}>
+        Exclude minors
+    </label>
+
+    <button type="submit">Apply</button>
+</form>
+
+<script>
+    function askName() {
+        const name = prompt("Please enter your name:");
+        if (name) {
+            window.location.href = `/hello/${name}/`;
+        }
+    }
+</script>
+{% endblock %}
