@@ -1,0 +1,29 @@
+from django.shortcuts import render
+from rest_framework import viewsets, permissions
+from .models import Task, Project
+from .serializers import TaskSerializer, ProjectSerializer
+from django.contrib.auth.decorators import login_required
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        return Project.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class TaskViewSet(viewsets.ModelViewSet):
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(project__owner=self.request.user)
+
+@login_required
+def dashboard(request):
+    return render(request, 'tasks/dashboard.html')
+
+@login_required
+def project_detail(request, pk):
+    return render(request, 'tasks/project_detail.html')

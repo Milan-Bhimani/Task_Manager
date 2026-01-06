@@ -1,0 +1,139 @@
+{% extends 'tasks/base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-8">
+        <h1>My Projects</h1>
+        <p class="text-muted">Powered by Django REST API</p>
+    </div>
+    <div class="col-4 text-end">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            + New Project
+        </button>
+    </div>
+</div>
+
+<div id="project-list" class="row">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createProjectModalLabel">Create New Project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createProjectForm">
+            <div class="mb-3">
+                <label for="projectName" class="form-label">Project Name</label>
+                <input type="text" class="form-control" id="projectName" required>
+            </div>
+            <div class="mb-3">
+                <label for="projectDesc" class="form-label">Description</label>
+                <textarea class="form-control" id="projectDesc"></textarea>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="createProject()">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    async function fetchProjects() {
+        try {
+            const response = await fetch('/api/projects/', {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const projects = await response.json();
+            renderProjects(projects);
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('project-list').innerHTML = '<div class="alert alert-danger">Failed to load projects</div>';
+        }
+    }
+
+    function renderProjects(projects) {
+        const container = document.getElementById('project-list');
+        if (projects.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center"><h3>No projects yet! 📂</h3></div>';
+            return;
+        }
+
+        let html = '';
+        projects.forEach(project => {
+            html += `
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">${project.name}</h5>
+                        <p class="card-text text-muted">${project.description || ''}</p>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-dark border">Tasks: ${project.tasks ? project.tasks.length : 0}</span>
+                            <a href="/project/${project.id}/" class="btn btn-sm btn-outline-primary">View Tasks</a>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    async function createProject() {
+        const name = document.getElementById('projectName').value;
+        const desc = document.getElementById('projectDesc').value;
+
+        // Get CSRF Token
+        let csrftoken = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === ('csrftoken=')) {
+                    csrftoken = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+
+        const response = await fetch('/api/projects/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ name: name, description: desc })
+        });
+
+        if (response.ok) {
+            // Close modal properly
+            const modalEl = document.getElementById('createProjectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // Refresh list
+            fetchProjects();
+
+            // Clear form
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDesc').value = '';
+        } else {
+            alert('Failed to create project');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchProjects);
+</script>
+{% endblock %}
