@@ -49,19 +49,37 @@
 #         person.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
-from rest_framework import generics
+# from rest_framework import generics
+# from .models import Person
+# from .serializers import PersonSerializer
+# from rest_framework.authentication import TokenAuthentication,SessionAuthentication
+# from rest_framework.permissions import IsAuthenticated
+    
+# class PersonListAPI(generics.ListCreateAPIView):
+#     queryset = Person.objects.select_related('team','profile').prefetch_related('skills').all()
+#     serializer_class = PersonSerializer
+#     filterset_fields = ['team__name','age']
+#     search_fields = ['name','skills__name']
+
+# class PersonDetailAPI(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Person.objects.select_related('team','profile').prefetch_related('skills').all()
+#     serializer_class = PersonSerializer
+#     lookup_field = 'id'
+
+
+from rest_framework import viewsets
 from .models import Person
 from .serializers import PersonSerializer
-from rest_framework.authentication import TokenAuthentication,SessionAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.permissions import IsAuthenticated 
+from .permissions import IsOwnerOrReadOnly
+class PersonViewSet(viewsets.ModelViewSet):
+    queryset = Person.objects.select_related('team', 'profile').prefetch_related('skills').all()
+    serializer_class = PersonSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    filterset_fields = ['team__name', 'age']
+    search_fields = ['name', 'skills__name']
     
-class PersonListAPI(generics.ListCreateAPIView):
-    queryset = Person.objects.select_related('team','profile').prefetch_related('skills').all()
-    serializer_class = PersonSerializer
-    filterset_fields = ['team__name','age']
-    search_fields = ['name','skills__name']
-
-class PersonDetailAPI(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Person.objects.select_related('team','profile').prefetch_related('skills').all()
-    serializer_class = PersonSerializer
-    lookup_field = 'id'
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

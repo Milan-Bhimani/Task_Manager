@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator,MaxValueValidator
-
+from django.contrib.auth.models import User
 # 1. New Team Model
 class Team(models.Model):
     name = models.CharField(max_length=50)
@@ -18,6 +18,7 @@ class Person(models.Model):
             MaxValueValidator(120)
         ]
     )
+    user = models.ForeignKey(User, on_delete= models.SET_NULL, null = True, blank= True)
 
     # ForeignKey: Link to Team
     # related_name='members' allows us to do team.members.all()
