@@ -12,6 +12,28 @@
     </div>
 </div>
 
+<div class="row mb-3">
+    <div class="col-md-3">
+        <select class="form-select" id="filterStatus" onchange="filterTasks()">
+            <option value="">All Statuses</option>
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="filterPriority" onchange="filterTasks()">
+            <option value="">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-outline-secondary" onclick="clearFilters()">Clear Filters</button>
+    </div>
+</div>
+
 <div class="row" id="task-list">
     <div class="col-12 text-center">
         <div class="spinner-border text-primary"></div>
@@ -33,6 +55,10 @@
                         <input type="text" class="form-control" id="taskTitle" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="taskDescription" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" id="taskStatus">
                             <option value="todo">To Do</option>
@@ -48,10 +74,62 @@
                             <option value="High">High</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="taskDueDate">
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="createTask()">Add Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTaskForm">
+                    <input type="hidden" id="editTaskId">
+                    <div class="mb-3">
+                        <label class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="editTaskTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="editTaskDescription" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="editTaskStatus">
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="editTaskPriority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="editTaskDueDate">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="submitEditTask()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -73,11 +151,34 @@
         document.getElementById('project-title').innerText = project.name;
         document.getElementById('project-desc').innerText = project.description;
 
-        // 2. Render Tasks (Using the nested tasks list from the serializer!)
-        renderTasks(project.tasks);
+        // 2. Fetch Tasks with Filters
+        filterTasks();
     }
 
-    function renderTasks(tasks) {
+    async function filterTasks() {
+        const status = document.getElementById('filterStatus').value;
+        const priority = document.getElementById('filterPriority').value;
+
+        let url = `/api/tasks/?project=${projectId}`;
+        if (status) url += `&status=${status}`;
+        if (priority) url += `&priority=${priority}`;
+
+        const response = await fetch(url);
+        const tasks = await response.json();
+
+        renderTasks(tasks); // API returns paginated response or list depending on settings
+    }
+
+    function clearFilters() {
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPriority').value = '';
+        filterTasks();
+    }
+
+    function renderTasks(data) {
+        // Handle pagination if present (DRF default pagination returns {count: x, results: [...]})
+        const tasks = Array.isArray(data) ? data : data.results;
+
         const container = document.getElementById('task-list');
         if (!tasks || tasks.length === 0) {
             container.innerHTML = '<div class="col-12 text-center text-muted">No tasks yet. Add one!</div>';
@@ -97,10 +198,24 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="card-title mb-1">${task.title}</h5>
-                            <span class="badge ${badgeClass}">${task.status.replace('_', ' ')}</span>
+                            <p class="card-text text-muted small mb-2">${task.description || ''}</p>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm ${badgeClass} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    ${task.status.replace('_', ' ')}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="updateTaskStatus(${task.id}, 'todo')">To Do</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateTaskStatus(${task.id}, 'in_progress')">In Progress</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateTaskStatus(${task.id}, 'done')">Done</a></li>
+                                </ul>
+                            </div>
                             <span class="badge bg-light text-dark border ms-2">${task.priority}</span>
+                            ${task.due_date ? `<small class="text-muted ms-3">📅 ${task.due_date}</small>` : ''}
                         </div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})">Delete</button>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick='openEditModal(${JSON.stringify(task).replace(/'/g, "&#39;")})'>Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})">Delete</button>
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -110,8 +225,10 @@
 
     async function createTask() {
         const title = document.getElementById('taskTitle').value;
+        const description = document.getElementById('taskDescription').value;
         const status = document.getElementById('taskStatus').value;
         const priority = document.getElementById('taskPriority').value;
+        const dueDate = document.getElementById('taskDueDate').value;
 
         // Helper to get CSRF
         const getCookie = (name) => {
@@ -128,8 +245,10 @@
             },
             body: JSON.stringify({
                 title: title,
+                description: description,
                 status: status,
                 priority: priority,
+                due_date: dueDate || null,
                 project: projectId // Link task to this project
             })
         });
@@ -141,6 +260,84 @@
             console.error('Error details:', data);
             alert('Error creating task: ' + JSON.stringify(data));
         }
+    }
+
+    async function updateTaskStatus(taskId, newStatus) {
+        const getCookie = (name) => {
+            let value = "; " + document.cookie;
+            let parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+
+        const response = await fetch(`/api/tasks/${taskId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.ok) {
+            loadProjectData(); // Refresh list to show new status color
+        } else {
+            alert('Failed to update status');
+        }
+    }
+
+    async function submitEditTask() {
+        const taskId = document.getElementById('editTaskId').value;
+        const title = document.getElementById('editTaskTitle').value;
+        const description = document.getElementById('editTaskDescription').value;
+        const status = document.getElementById('editTaskStatus').value;
+        const priority = document.getElementById('editTaskPriority').value;
+        const dueDate = document.getElementById('editTaskDueDate').value;
+
+        // Helper to get CSRF
+        const getCookie = (name) => {
+            let value = "; " + document.cookie;
+            let parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+
+        const response = await fetch(`/api/tasks/${taskId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                status: status,
+                priority: priority,
+                due_date: dueDate || null
+            })
+        });
+
+        if (response.ok) {
+            // Close modal
+            const modalEl = document.getElementById('editTaskModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // Refresh list
+            loadProjectData();
+        } else {
+            alert('Error updating task');
+        }
+    }
+
+    function openEditModal(task) {
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskStatus').value = task.status;
+        document.getElementById('editTaskPriority').value = task.priority;
+        document.getElementById('editTaskDueDate').value = task.due_date;
+
+        const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+        modal.show();
     }
 
     async function deleteTask(taskId) {

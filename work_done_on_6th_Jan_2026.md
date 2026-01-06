@@ -43,14 +43,18 @@ We created a new project `demo` to build a real-world application.
     *   **Dashboard:** Fetches and displays projects via API.
     *   **Project Detail:** Fetches tasks, color-coded status badges.
     *   **Interactive Forms:** Modal-based creation forms for Projects and Tasks using `fetch()` API.
+    *   **Task Management:** Added ability to **Edit** tasks, update **Status** (dropdown), and **Delete** projects.
+    *   **Filtering:** Implemented real-time filtering by Status and Priority using `django-filter` on backend and JS on frontend.
+    *   **Scheduling:** Added **Due Date** support.
 
 ### C. Challenges Solved
 1.  **CSRF Protection:** Implemented JS logic to read the `csrftoken` cookie for secure POST requests.
 2.  **Data Mismatch:** Fixed a bug where frontend sent "low" (lowercase) priority while backend expected "Low" (Title case).
 3.  **Recursion:** Fixed `BASE_DIR` configuration error in settings.
+4.  **State Management:** Ensured the UI updates immediately after API calls (e.g., reloading list after edit) without full page refreshes.
 
 ---
 
 ## ⏭️ Next Steps
 *   **Deployment:** Prepare the Task Manager for deployment.
-*   **Refinement:** Add due dates and filtering to the frontend.
+*   **Testing:** Write unit tests for the new API endpoints and filtering logic.

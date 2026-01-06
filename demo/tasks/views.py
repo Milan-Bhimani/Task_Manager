@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions
 from .models import Task, Project
 from .serializers import TaskSerializer, ProjectSerializer
 from django.contrib.auth.decorators import login_required
+from django_filters.rest_framework import DjangoFilterBackend
 
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
@@ -16,6 +17,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status', 'priority', 'project']
 
     def get_queryset(self):
         return Task.objects.filter(project__owner=self.request.user)
