@@ -72,6 +72,6 @@ python manage.py migrate
 
 ---
 
-## ⏭️ Next Steps (Day 8)
+## ⏭️ Next Steps (Day 4)
 *   **Deployment:** The app is now feature-complete and ready for deployment to a cloud provider (e.g., Render, Railway, or AWS).
 *   **Testing:** Write unit tests for the new API endpoints and filtering logic.
