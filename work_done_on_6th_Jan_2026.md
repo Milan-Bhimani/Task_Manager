@@ -54,8 +54,24 @@ We created a new project `demo` to build a real-world application.
 3.  **Recursion:** Fixed `BASE_DIR` configuration error in settings.
 4.  **State Management:** Ensured the UI updates immediately after API calls (e.g., reloading list after edit) without full page refreshes.
 
+## 🛠️ Commands Executed
+Reference for setting up the environment:
+```bash
+# Setup the new project
+django-admin startproject demo
+cd demo
+python manage.py startapp tasks
+
+# Install dependencies
+pip install django-filter
+
+# Database migrations
+python manage.py makemigrations
+python manage.py migrate
+```
+
 ---
 
-## ⏭️ Next Steps
+## ⏭️ Next Steps (Day 8)
 *   **Deployment:** The app is now feature-complete and ready for deployment to a cloud provider (e.g., Render, Railway, or AWS).
 *   **Testing:** Write unit tests for the new API endpoints and filtering logic.

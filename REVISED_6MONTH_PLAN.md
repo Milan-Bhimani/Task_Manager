@@ -35,11 +35,11 @@
 - [x] Install DRF, Serializers basics
 - [x] ModelSerializer
 - [x] APIView and ViewSets
-- [ ] Routers
+- [x] Routers
 - [x] Token Authentication
 - [ ] JWT Authentication (djangorestframework-simplejwt)
 - [x] Permissions and Throttling
-- [ ] Pagination
+- [x] Pagination
 - [x] Filtering and Search
 
 ### Deliverable:
