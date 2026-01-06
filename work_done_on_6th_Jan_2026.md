@@ -46,6 +46,7 @@ We created a new project `demo` to build a real-world application.
     *   **Task Management:** Added ability to **Edit** tasks, update **Status** (dropdown), and **Delete** projects.
     *   **Filtering:** Implemented real-time filtering by Status and Priority using `django-filter` on backend and JS on frontend.
     *   **Scheduling:** Added **Due Date** support.
+    *   **Authentication:** Added **Sign Up** page using `UserCreationForm` so users can register themselves, plus standard Login/Logout flows.
 
 ### C. Challenges Solved
 1.  **CSRF Protection:** Implemented JS logic to read the `csrftoken` cookie for secure POST requests.
@@ -56,5 +57,5 @@ We created a new project `demo` to build a real-world application.
 ---
 
 ## ⏭️ Next Steps
-*   **Deployment:** Prepare the Task Manager for deployment.
+*   **Deployment:** The app is now feature-complete and ready for deployment to a cloud provider (e.g., Render, Railway, or AWS).
 *   **Testing:** Write unit tests for the new API endpoints and filtering logic.
